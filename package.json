@@ -1,0 +1,17 @@
+{
+  "name": "tripadvisor-npm",
+  "version": "1.0.0",
+  "description": "Monorepo for Tripadvisor NPM-ecosystem packages",
+  "license": "MIT",
+  "private": true,
+  "author": "Marcus Armstrong <marcusdarmstrong@gmail.com>",
+  "scripts": {},
+  "workspaces": [
+    "./packages/*"
+  ],
+  "type": "module",
+  "devDependencies": {
+    "eslint-config-prettier": "8.5.0",
+    "@typescript-eslint/eslint-plugin": "5.36.2"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "include": [],
+  "compilerOptions": {
+    "lib": ["ES2021", "esnext"],
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "types": [],
+    "alwaysStrict": true,
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "useUnknownInCatchVariables": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "references": [
+    {
+      "path": "packages/fast-hash-file"
+    },
+    {
+      "path": "packages/fast-read-file"
+    },
+    {
+      "path": "packages/promisified-resource-pool"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "promisified-resource-pool",
+  "version": "1.0.0",
+  "description": "A utility to manage concurrent access to a limited pool of resources",
+  "license": "MIT",
+  "author": "Marcus Armstrong <marcusdarmstrong@gmail.com>",
+  "scripts": {
+    "format": "prettier --write . --ignore-path ../../.prettierignore",
+    "lint": "eslint *.ts --report-unused-disable-directives",
+    "check": "tsc --project tsconfig.json --emitDeclarationOnly",
+    "build": "rollup -c",
+    "test": "node --test dist",
+    "prepublishOnly": "npm run format && npm run check && npm run lint && npm run build && npm test"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "heap-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "prettier": "2.7.1",
+    "rollup": "2.79.0",
+    "@babel/preset-typescript": "7.18.6",
+    "@rollup/plugin-babel": "5.3.1",
+    "rollup-plugin-terser": "7.0.2",
+    "typescript": "4.8.2",
+    "eslint": "8.23.0",
+    "@rollup/plugin-node-resolve": "14.0.1"
+  },
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/resource-pool.d.ts",
+      "import": "./dist/resource-pool.js"
+    }
+  },
+  "types": "./dist/resource-pool.d.ts",
+  "prettier": "../../.prettierrc.json"
+}
