@@ -27,4 +27,5 @@ export default {
     format: "es",
     sourcemap: true,
   },
+  preserveSymlinks: true,
 };

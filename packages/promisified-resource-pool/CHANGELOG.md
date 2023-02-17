@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Added
+
+- Syntax annotations in readme
+
 ## [1.0.1]
 
 ### Added

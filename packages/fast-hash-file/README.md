@@ -23,7 +23,7 @@ pooled fs.createReadStream + node:crypto sha1 x 1.60 ops/sec ±6.10% (13 runs sa
 
 Basic usage:
 
-```
+```ts
 import { hashFile } from 'fast-hash-file';
 
 await hashFile('./path/to/file.txt'); // Return a bigint hash of the file contents
@@ -31,7 +31,7 @@ await hashFile('./path/to/file.txt'); // Return a bigint hash of the file conten
 
 If you'd like to customize the Buffer pool or sizes in use, the raw file hasher is available to offer no allocation overhead and full control. You'll additionally need to provide an instance of xxhash-wasm, which can and should be reused to avoid initializing new webassembly modules.
 
-```
+```ts
 import { hashFile } from 'fast-hash-file/raw';
 import xxhashInitializer from 'xxhash-wasm';
 

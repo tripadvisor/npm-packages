@@ -21,7 +21,7 @@ gracefulFs.readFile (mixed) x 6.24 ops/sec ±2.04% (34 runs sampled)
 
 Basic usage:
 
-```
+```ts
 import { readFile } from 'fast-read-file';
 
 await readFile('./path/to/file.txt'); // Return a Buffer of the file
@@ -29,7 +29,7 @@ await readFile('./path/to/file.txt'); // Return a Buffer of the file
 
 If you'd like to customize the working Buffer pool or sizes in use, the raw file reader is available to offer no allocation overhead and full control. For optimal performance, you'll want to avoid small (<4K) buffers. 64K provides a reasonable starting point for most filesystem reads.
 
-```
+```ts
 import { readFile } from 'fast-read-file/raw';
 
 const workingBuffer = Buffer.allocUnsafe(64 * 1024);

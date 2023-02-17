@@ -11,7 +11,7 @@ While JavaScript provides some basic mechanisms (`Promise.all`, `Promise.race`, 
 
 For cases where there is no resource to manage, and the only desire is for a concurrency limit there's a `sizedPool` helper:
 
-```
+```ts
 import { sizedPool } from 'promisified-resource-pool';
 
 const enqueue = sizedPool(10);
@@ -27,7 +27,7 @@ For cases with an underlying set of object resources we need to restrict concurr
 > **Warning**
 > The second parameter provided to a resourcePool's `enqueue` function must have a unique object identity.
 
-```
+```ts
 import { resourcePool } from 'promisified-resource-pool';
 
 // Create a resource pool
@@ -43,7 +43,7 @@ await enqueue(null, callback, callback);
 
 Prioritized callbacks:
 
-```
+```ts
 import { resourcePool } from 'promisified-resource-pool';
 
 // When creating a pool, a comparator can be provided to evaluate the prioritization of enqueued
@@ -66,7 +66,7 @@ await Promise.all([
 
 There's also the `semaphore` export, which constructs a "pool" that is useful in implementing pools like the `sizedPool` above, but in a more configurable way that's more efficient than an array:
 
-```
+```ts
 import { resourcePool, semaphore } from 'promisified-resource-pool';
 
 // Here we can create a resource pool with a fixed size that retains prioritization capabilities.
@@ -80,7 +80,7 @@ await Promise.all([
 
 Abortable callbacks:
 
-```
+```ts
 import { resourcePool } from 'promisified-resource-pool';
 
 const enqueue = resourcePool(['resource1', 'resource2']);

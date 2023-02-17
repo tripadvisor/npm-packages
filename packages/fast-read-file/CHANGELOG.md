@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.2]
+
+### Added
+
+- Syntax annotations in readme
+
+### Fixes
+
+- Prevented bundling of workspace dependencies (`promisified-resource-pool`)
+
 ## [1.0.1]
 
 ### Added
