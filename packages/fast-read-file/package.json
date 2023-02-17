@@ -20,7 +20,7 @@
     "node": ">=16"
   },
   "dependencies": {
-    "promisified-resource-pool": "^1.0.0"
+    "promisified-resource-pool": "^1.0.1"
   },
   "devDependencies": {
     "prettier": "2.7.1",

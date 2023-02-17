@@ -20,7 +20,7 @@
     "node": ">=16"
   },
   "dependencies": {
-    "promisified-resource-pool": "^1.0.0",
+    "promisified-resource-pool": "^1.0.1",
     "xxhash-wasm": "^1.0.1"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "benchmark": "2.1.4",
     "@types/benchmark": "2.1.2",
     "fdir": "5.2.0",
-    "fast-read-file": "1.0.0"
+    "fast-read-file": "1.0.1"
   },
   "type": "module",
   "exports": {
