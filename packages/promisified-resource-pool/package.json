@@ -1,6 +1,9 @@
 {
   "name": "promisified-resource-pool",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "files": [
+    "dist/*"
+  ],
   "description": "A utility to manage concurrent access to a limited pool of resources",
   "license": "MIT",
   "author": "Marcus Armstrong <marcusdarmstrong@gmail.com>",

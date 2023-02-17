@@ -1,6 +1,9 @@
 {
   "name": "fast-read-file",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "files": [
+    "dist/*"
+  ],
   "description": "A utility to efficiently and safely read a large number of files",
   "license": "MIT",
   "author": "Marcus Armstrong <marcusdarmstrong@gmail.com>",
