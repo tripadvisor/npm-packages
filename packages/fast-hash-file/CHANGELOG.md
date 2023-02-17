@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3]
+
+### Fixes
+
+- Restore .d.ts definitions
+
 ## [1.0.2]
 
 ### Added
