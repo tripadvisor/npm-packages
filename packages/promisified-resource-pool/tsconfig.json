@@ -4,7 +4,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declarationDir": "dist",
-    "lib": ["ES2021", "DOM"],
     "types": ["node"]
   }
 }

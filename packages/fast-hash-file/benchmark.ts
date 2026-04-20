@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as crypto from "node:crypto";
 
 import Benchmark from "benchmark";
-import { fdir, PathsOutput } from "fdir";
+import { fdir } from "fdir";
 import xxhashIntializer from "xxhash-wasm";
 
 import { sizedPool } from "promisified-resource-pool";
@@ -14,10 +14,10 @@ const xxhash = await xxhashIntializer();
 
 const pool = sizedPool(20);
 
-const nmPaths = (await new fdir()
+const nmPaths: Array<string> = await new fdir()
   .withBasePath()
   .crawl("../../node_modules")
-  .withPromise()) as PathsOutput;
+  .withPromise();
 
 await new Promise<void>((suiteResolver) => {
   new Benchmark.Suite()
@@ -54,7 +54,7 @@ await new Promise<void>((suiteResolver) => {
             pool(
               () =>
                 new Promise((resolve) => {
-                  fs.readFile(path, (err, data) => {
+                  fs.readFile(path, (_err, data) => {
                     const hash = crypto.createHash("md5");
                     hash.update(data);
                     resolve(hash.digest("hex"));
@@ -74,7 +74,7 @@ await new Promise<void>((suiteResolver) => {
             pool(
               () =>
                 new Promise((resolve) => {
-                  fs.readFile(path, (err, data) => {
+                  fs.readFile(path, (_err, data) => {
                     const hash = crypto.createHash("sha256");
                     hash.update(data);
                     resolve(hash.digest("hex"));
@@ -94,7 +94,7 @@ await new Promise<void>((suiteResolver) => {
             pool(
               () =>
                 new Promise((resolve) => {
-                  fs.readFile(path, (err, data) => {
+                  fs.readFile(path, (_err, data) => {
                     const hash = crypto.createHash("sha1");
                     hash.update(data);
                     resolve(hash.digest("hex"));
@@ -114,7 +114,7 @@ await new Promise<void>((suiteResolver) => {
             pool(
               () =>
                 new Promise((resolve) => {
-                  fs.readFile(path, (err, data) => {
+                  fs.readFile(path, (_err, data) => {
                     resolve(xxhash.h64Raw(data));
                   });
                 }),
@@ -135,7 +135,9 @@ await new Promise<void>((suiteResolver) => {
                   const hash = crypto.createHash("sha1").setEncoding("hex");
                   fs.createReadStream(path)
                     .pipe(hash)
-                    .once("finish", () => resolve(hash.read()));
+                    .once("finish", () => {
+                      resolve(hash.read());
+                    });
                 }),
             ),
           ),
@@ -144,10 +146,13 @@ await new Promise<void>((suiteResolver) => {
       },
     })
     .on("cycle", function (event: Benchmark.Event) {
+      // Benchmark.Target defines a custom toString, but @types/benchmark omits it.
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       console.log(String(event.target));
     })
     .on("complete", function (this: Benchmark.Suite) {
-      console.log(`Fastest is ${this.filter("fastest").map("name").toString()}\n`);
+      const fastest = this.filter("fastest").map("name").join(",");
+      console.log(`Fastest is ${fastest}\n`);
       suiteResolver();
     })
     .run();
@@ -169,7 +174,9 @@ for (const [size, path] of Object.entries({
             const hash = crypto.createHash("sha1").setEncoding("hex");
             fs.createReadStream(path)
               .pipe(hash)
-              .once("finish", () => resolve(hash.read()));
+              .once("finish", () => {
+                resolve(hash.read());
+              });
           });
           deferred.resolve();
         },
@@ -178,7 +185,7 @@ for (const [size, path] of Object.entries({
         defer: true,
         fn: async (deferred: Benchmark.Deferred) => {
           await new Promise((resolve) => {
-            fs.readFile(path, (err, data) => {
+            fs.readFile(path, (_err, data) => {
               const hash = crypto.createHash("sha1");
               hash.update(data);
               resolve(hash.digest("hex"));
@@ -202,10 +209,12 @@ for (const [size, path] of Object.entries({
         },
       })
       .on("cycle", function (event: Benchmark.Event) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         console.log(String(event.target));
       })
       .on("complete", function (this: Benchmark.Suite) {
-        console.log(`Fastest for ${size} is ${this.filter("fastest").map("name").toString()}\n`);
+        const fastest = this.filter("fastest").map("name").join(",");
+        console.log(`Fastest for ${size} is ${fastest}\n`);
         resolve();
       })
       .run();
@@ -221,9 +230,11 @@ new Benchmark.Suite()
     Buffer.from(buffer.buffer, 0, buffer.length);
   })
   .on("cycle", function (event: Benchmark.Event) {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     console.log(String(event.target));
   })
   .on("complete", function (this: Benchmark.Suite) {
-    console.log(`Fastest for memory view is ${this.filter("fastest").map("name").toString()}\n`);
+    const fastest = this.filter("fastest").map("name").join(",");
+    console.log(`Fastest for memory view is ${fastest}\n`);
   })
   .run();

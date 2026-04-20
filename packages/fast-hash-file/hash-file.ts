@@ -12,7 +12,12 @@ import type { XXHash, XXHashAPI } from "xxhash-wasm";
  * We'll assume the vast majority of files are < 64K, so it makes sense for us to optimize this case
  * (potentially even at the expense of the >64K case).
  */
-export const hashFile = (buffer: Buffer, path: string, xxhash: XXHashAPI): Promise<bigint> =>
+export const hashFile = (
+  buffer: Buffer,
+  path: string,
+  xxhash: XXHashAPI,
+  seed?: bigint,
+): Promise<bigint> =>
   new Promise((resolve, reject) => {
     const BUFFER_SIZE = buffer.length;
     // Using the raw callback APIs demonstrated a perf advantage over the fs.promises variants,
@@ -48,12 +53,12 @@ export const hashFile = (buffer: Buffer, path: string, xxhash: XXHashAPI): Promi
           // We need to use a `var` here to ensure `result` is available for the above callback
           // closure—the alternative is a late-initialized `let` higher in the block scope.
           // eslint-disable-next-line no-var
-          var result = xxhash.h64Raw(buffer.subarray(0, bytesRead));
+          var result = xxhash.h64Raw(buffer.subarray(0, bytesRead), seed);
           return;
         }
 
         // If we _haven't_ fit the whole file, we'll do an incremental hash.
-        const hash: XXHash<bigint> = xxhash.create64();
+        const hash: XXHash<bigint> = xxhash.create64(seed);
         hash.update(buffer);
 
         function doRead() {

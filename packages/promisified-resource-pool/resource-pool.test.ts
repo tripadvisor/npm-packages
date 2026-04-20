@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert";
 
-import { resourcePool } from "./resource-pool";
+import { resourcePool, unprioritizedResourcePool, sizedPool } from "./resource-pool";
 
 interface Fulfillable {
   priority: number;
@@ -35,7 +35,7 @@ const fulfillablePromise = (priority = 0): Fulfillable => {
 
 await test("It should execute all provided callbacks", async () => {
   const resources = ["foo", "bar"];
-  const pool = resourcePool(resources);
+  const { dispatch } = resourcePool<string, unknown>(resources);
 
   let consumptions = 0;
   const consumer = async () => {
@@ -44,9 +44,9 @@ await test("It should execute all provided callbacks", async () => {
   };
 
   await Promise.all([
-    pool(null, () => consumer(), consumer),
-    pool(null, () => consumer(), consumer),
-    pool(null, () => consumer(), consumer),
+    dispatch(null, {}, consumer),
+    dispatch(null, {}, consumer),
+    dispatch(null, {}, consumer),
   ]);
 
   assert.equal(consumptions, 3);
@@ -54,24 +54,22 @@ await test("It should execute all provided callbacks", async () => {
 
 await test("It should enqueue callbacks without sufficient resources", async () => {
   const resources = ["foo", "bar"];
-  // https://github.com/typescript-eslint/typescript-eslint/issues/3612
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const pool = resourcePool<string, void, Fulfillable>(resources);
+  const { dispatch } = resourcePool<string, Fulfillable>(resources);
 
   const task1 = fulfillablePromise();
   const task2 = fulfillablePromise();
   const task3 = fulfillablePromise();
 
   const promises = [
-    pool(null, task1, async () => {
+    dispatch(null, task1, async () => {
       task1.resolve();
       await task1.promise;
     }),
-    pool(null, task2, async () => {
+    dispatch(null, task2, async () => {
       task2.resolve();
       await task2.promise;
     }),
-    pool(null, task3, async () => {
+    dispatch(null, task3, async () => {
       task3.resolve();
       await task3.promise;
     }),
@@ -85,9 +83,7 @@ await test("It should enqueue callbacks without sufficient resources", async () 
 
 await test("It should prioritize callbacks according to the comparator", async () => {
   const resources = ["foo"];
-  // https://github.com/typescript-eslint/typescript-eslint/issues/3612
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const pool = resourcePool<string, void, Fulfillable>(
+  const { dispatch } = resourcePool<string, Fulfillable>(
     resources,
     (c1, c2) => c2.priority - c1.priority,
   );
@@ -97,15 +93,15 @@ await test("It should prioritize callbacks according to the comparator", async (
   const task3 = fulfillablePromise(1);
 
   const promises = [
-    pool(null, task1, async () => {
+    dispatch(null, task1, async () => {
       task1.resolve();
       await task1.promise;
     }),
-    pool(null, task2, async () => {
+    dispatch(null, task2, async () => {
       task2.resolve();
       await task2.promise;
     }),
-    pool(null, task3, async () => {
+    dispatch(null, task3, async () => {
       task3.resolve();
       await task3.promise;
     }),
@@ -124,9 +120,7 @@ await test("It should prioritize callbacks according to the comparator", async (
 
 await test("It should abort callbacks when asked", async () => {
   const resources = ["foo"];
-  // https://github.com/typescript-eslint/typescript-eslint/issues/3612
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const pool = resourcePool<string, void, Fulfillable>(resources);
+  const { dispatch } = resourcePool<string, Fulfillable>(resources);
 
   const task1 = fulfillablePromise();
   const task2 = fulfillablePromise();
@@ -135,11 +129,11 @@ await test("It should abort callbacks when asked", async () => {
   const abortController = new AbortController();
 
   const promises = [
-    pool(abortController.signal, task1, async () => {
+    dispatch(abortController.signal, task1, async () => {
       task1.resolve();
       await task1.promise;
     }),
-    pool(abortController.signal, task2, async () => {
+    dispatch(abortController.signal, task2, async () => {
       task2.resolve();
       await task2.promise;
     }),
@@ -152,7 +146,7 @@ await test("It should abort callbacks when asked", async () => {
 
   let caught = false;
   try {
-    await pool(abortController.signal, task3, async () => {
+    await dispatch(abortController.signal, task3, async () => {
       task3.resolve();
       await task3.promise;
     });
@@ -168,9 +162,7 @@ await test("It should abort callbacks when asked", async () => {
 
 await test("It should abort callbacks when asked with prioritization", async () => {
   const resources = ["foo"];
-  // https://github.com/typescript-eslint/typescript-eslint/issues/3612
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const pool = resourcePool<string, void, Fulfillable>(
+  const { dispatch } = resourcePool<string, Fulfillable>(
     resources,
     (c1, c2) => c2.priority - c1.priority,
   );
@@ -182,15 +174,15 @@ await test("It should abort callbacks when asked with prioritization", async () 
   const abortController = new AbortController();
 
   const promises = [
-    pool(abortController.signal, task1, async () => {
+    dispatch(abortController.signal, task1, async () => {
       task1.resolve();
       await task1.promise;
     }),
-    pool(abortController.signal, task2, async () => {
+    dispatch(abortController.signal, task2, async () => {
       task2.resolve();
       await task2.promise;
     }),
-    pool(abortController.signal, task3, async () => {
+    dispatch(abortController.signal, task3, async () => {
       task3.resolve();
       await task3.promise;
     }),
@@ -206,4 +198,181 @@ await test("It should abort callbacks when asked with prioritization", async () 
   await Promise.allSettled(promises);
 
   assert(!task2.isSettled(), "The second task should never have run");
+});
+
+await test("It should abort a previously-queued dispatch when the same comparable is re-dispatched", async () => {
+  const resources = ["foo"];
+  const { dispatch } = resourcePool<string, string>(resources);
+
+  const block = fulfillablePromise();
+  const primary = dispatch(null, "held", async () => {
+    await block.promise;
+  });
+
+  let firstRan = false;
+  const first = dispatch(null, "shared", () => {
+    firstRan = true;
+    return Promise.resolve();
+  });
+
+  let secondRan = false;
+  const second = dispatch(null, "shared", () => {
+    secondRan = true;
+    return Promise.resolve();
+  });
+
+  await assert.rejects(first, { name: "AbortError" });
+
+  block.resolve();
+  await primary;
+  await second;
+
+  assert(!firstRan, "The initial dispatch should have been aborted before running");
+  assert(secondRan, "The replacement dispatch should have run");
+});
+
+await test("Aborting the signal of a deduped dispatch must not evict its replacement", async () => {
+  const resources = ["foo"];
+  const { dispatch } = resourcePool<string, string>(resources);
+
+  const block = fulfillablePromise();
+  const primary = dispatch(null, "held", async () => {
+    await block.promise;
+  });
+
+  const controller = new AbortController();
+  const first = dispatch(controller.signal, "shared", () => Promise.resolve());
+
+  let replacementRan = false;
+  const replacement = dispatch(null, "shared", () => {
+    replacementRan = true;
+    return Promise.resolve();
+  });
+
+  await assert.rejects(first, { name: "AbortError" });
+
+  // The first dispatch's abort listener is still attached to `controller`.
+  // Firing it here must not evict the replacement from the queue.
+  controller.abort();
+
+  block.resolve();
+  await primary;
+  await replacement;
+
+  assert(replacementRan, "The replacement should have received the resource");
+});
+
+await test("remove() on an in-pool resource prevents it from being dispatched", async () => {
+  const resources = ["foo", "bar"];
+  const { dispatch, remove } = resourcePool<string, unknown>(resources);
+
+  remove("foo");
+
+  const seen: Array<string> = [];
+  await Promise.all([
+    dispatch(null, {}, (r) => {
+      seen.push(r);
+      return Promise.resolve();
+    }),
+    dispatch(null, {}, (r) => {
+      seen.push(r);
+      return Promise.resolve();
+    }),
+  ]);
+
+  assert.deepEqual(
+    seen.sort(),
+    ["bar", "bar"],
+    "Every dispatch should have received the non-removed resource",
+  );
+});
+
+await test("remove() on the last pool resource rejects all queued waiters", async () => {
+  const resources = ["foo"];
+  const { dispatch, remove } = resourcePool<string, string>(resources);
+
+  const block = fulfillablePromise();
+  const held = dispatch(null, "held", async () => {
+    await block.promise;
+  });
+
+  const waiter1 = dispatch(null, "one", () => Promise.resolve());
+  const waiter2 = dispatch(null, "two", () => Promise.resolve());
+
+  remove("foo");
+  block.resolve();
+  await held;
+
+  await assert.rejects(waiter1, /exhausted/);
+  await assert.rejects(waiter2, /exhausted/);
+});
+
+await test("dispatch into a fully-removed pool rejects synchronously", async () => {
+  const { dispatch, remove } = resourcePool<string, unknown>(["foo"]);
+  remove("foo");
+
+  await assert.rejects(
+    dispatch(null, {}, () => Promise.resolve()),
+    /exhausted/,
+  );
+});
+
+await test("unprioritizedResourcePool executes callbacks and reuses resources", async () => {
+  const exec = unprioritizedResourcePool<string>(["foo"]);
+  const results: Array<string> = [];
+  await Promise.all([
+    exec(null, (r) => {
+      results.push(r);
+      return Promise.resolve();
+    }),
+    exec(null, (r) => {
+      results.push(r);
+      return Promise.resolve();
+    }),
+    exec(null, (r) => {
+      results.push(r);
+      return Promise.resolve();
+    }),
+  ]);
+  assert.deepEqual(results, ["foo", "foo", "foo"]);
+});
+
+await test("unprioritizedResourcePool aborts queued callbacks", async () => {
+  const exec = unprioritizedResourcePool<string>(["foo"]);
+  const block = fulfillablePromise();
+
+  const primary = exec(null, async () => {
+    await block.promise;
+  });
+
+  const controller = new AbortController();
+  const aborted = exec(controller.signal, () => Promise.resolve());
+
+  controller.abort();
+  await assert.rejects(aborted, { name: "AbortError" });
+  block.resolve();
+  await primary;
+});
+
+await test("sizedPool limits concurrency", async () => {
+  const exec = sizedPool(2);
+  let active = 0;
+  let maxActive = 0;
+
+  await Promise.all(
+    Array.from({ length: 8 }, () =>
+      exec(async () => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        await Promise.resolve();
+        active--;
+      }),
+    ),
+  );
+
+  assert.equal(maxActive, 2);
+});
+
+await test("sizedPool rejects invalid sizes", () => {
+  assert.throws(() => sizedPool(0), /Invalid pool size/);
 });

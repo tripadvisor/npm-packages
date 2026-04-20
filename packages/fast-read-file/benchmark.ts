@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 
 import Benchmark from "benchmark";
 import gracefulFs from "graceful-fs";
-import { fdir, PathsOutput } from "fdir";
+import { fdir } from "fdir";
 
 import { sizedPool } from "promisified-resource-pool";
 
@@ -14,10 +14,10 @@ const pool = sizedPool(20);
 const buffer = Buffer.allocUnsafe(64 * 1024);
 const promisifiedReadFile = promisify(fs.readFile);
 
-const nmPaths = (await new fdir()
+const nmPaths: Array<string> = await new fdir()
   .withBasePath()
   .crawl("../../node_modules")
-  .withPromise()) as PathsOutput;
+  .withPromise();
 
 await new Promise<void>((suiteResolver) => {
   new Benchmark.Suite()
@@ -43,9 +43,11 @@ await new Promise<void>((suiteResolver) => {
         await Promise.all(
           nmPaths.map((path) =>
             pool(
-              async () =>
+              () =>
                 new Promise((resolve) => {
-                  fs.readFile(path, (err, data) => resolve(data));
+                  fs.readFile(path, (_err, data) => {
+                    resolve(data);
+                  });
                 }),
             ),
           ),
@@ -73,17 +75,24 @@ await new Promise<void>((suiteResolver) => {
         await Promise.all(
           nmPaths.map(
             (path) =>
-              new Promise((resolve) => gracefulFs.readFile(path, (err, data) => resolve(data))),
+              new Promise((resolve) => {
+                gracefulFs.readFile(path, (_err, data) => {
+                  resolve(data);
+                });
+              }),
           ),
         );
         deferred.resolve();
       },
     })
     .on("cycle", function (event: Benchmark.Event) {
+      // Benchmark.Target defines a custom toString, but @types/benchmark omits it.
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       console.log(String(event.target));
     })
     .on("complete", function (this: Benchmark.Suite) {
-      console.log(`Fastest for mixed is ${this.filter("fastest").map("name").toString()}\n`);
+      const fastest = this.filter("fastest").map("name").join(",");
+      console.log(`Fastest for mixed is ${fastest}\n`);
       suiteResolver();
     })
     .run();
@@ -108,7 +117,11 @@ for (const [size, path] of Object.entries({
       .add(`fs.readFile (${size})`, {
         defer: true,
         fn: async (deferred: Benchmark.Deferred) => {
-          await new Promise((resolve) => fs.readFile(path, (err, data) => resolve(data)));
+          await new Promise((resolve) => {
+            fs.readFile(path, (_err, data) => {
+              resolve(data);
+            });
+          });
           deferred.resolve();
         },
       })
@@ -143,7 +156,11 @@ for (const [size, path] of Object.entries({
       .add(`gracefulFs.readFile (${size})`, {
         defer: true,
         fn: async (deferred: Benchmark.Deferred) => {
-          await new Promise((resolve) => gracefulFs.readFile(path, (err, data) => resolve(data)));
+          await new Promise((resolve) => {
+            gracefulFs.readFile(path, (_err, data) => {
+              resolve(data);
+            });
+          });
           deferred.resolve();
         },
       })
@@ -155,10 +172,12 @@ for (const [size, path] of Object.entries({
         },
       })
       .on("cycle", function (event: Benchmark.Event) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         console.log(String(event.target));
       })
       .on("complete", function (this: Benchmark.Suite) {
-        console.log(`Fastest for ${size} is ${this.filter("fastest").map("name").toString()}\n`);
+        const fastest = this.filter("fastest").map("name").join(",");
+        console.log(`Fastest for ${size} is ${fastest}\n`);
         resolve();
       })
       .run();
@@ -184,9 +203,11 @@ new Benchmark.Suite()
     Buffer.concat([buffer.subarray(0, buffer.length)]);
   })
   .on("cycle", function (event: Benchmark.Event) {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     console.log(String(event.target));
   })
   .on("complete", function (this: Benchmark.Suite) {
-    console.log(`Fastest for memcpy is ${this.filter("fastest").map("name").toString()}\n`);
+    const fastest = this.filter("fastest").map("name").join(",");
+    console.log(`Fastest for memcpy is ${fastest}\n`);
   })
   .run();
