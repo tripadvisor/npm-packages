@@ -1,4 +1,4 @@
-import { resourcePool } from "promisified-resource-pool";
+import { unprioritizedResourcePool } from "promisified-resource-pool";
 
 import { readFile as rawReadFile } from "./read-file";
 
@@ -12,11 +12,11 @@ const BUFFER_SIZE = 64 * 1024;
 // to the particular environment you're running in, and it may prove wise to configure your own
 // pool accordingly.
 const POOL_SIZE = 24;
-const pool: Buffer[] = [];
+const pool: Array<Buffer> = [];
 while (pool.length < POOL_SIZE) {
   pool.push(Buffer.allocUnsafe(BUFFER_SIZE));
 }
-const exec = resourcePool<Buffer, Buffer>(pool, () => 0);
+const exec = unprioritizedResourcePool<Buffer>(pool);
 
 /**
  * This throttling simultaneously ensures that we have a viable pool of working buffers for file
@@ -24,5 +24,5 @@ const exec = resourcePool<Buffer, Buffer>(pool, () => 0);
  */
 export const readFile = (filepath: string): Promise<Buffer> => {
   const callback = (buffer: Buffer) => rawReadFile(buffer, filepath);
-  return exec(null, callback, callback);
+  return exec(null, callback);
 };

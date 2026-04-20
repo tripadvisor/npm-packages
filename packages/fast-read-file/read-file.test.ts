@@ -49,7 +49,9 @@ const generateFile = async (filename: string) => {
     });
   }
   return new Promise<void>((resolve) => {
-    stream.close(() => resolve());
+    stream.close(() => {
+      resolve();
+    });
   });
 };
 

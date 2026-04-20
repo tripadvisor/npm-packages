@@ -1,4 +1,4 @@
-import { resourcePool } from "promisified-resource-pool";
+import { unprioritizedResourcePool } from "promisified-resource-pool";
 import xxhashIntializer from "xxhash-wasm";
 
 import { hashFile as rawHashFile } from "./hash-file";
@@ -11,14 +11,14 @@ const BUFFER_SIZE = 64 * 1024;
 // to the particular environment you're running in, and it may prove wise to configure your own
 // pool accordingly.
 const POOL_SIZE = 48;
-const pool: Buffer[] = [];
+const pool: Array<Buffer> = [];
 while (pool.length < POOL_SIZE) {
   pool.push(Buffer.allocUnsafe(BUFFER_SIZE));
 }
-const exec = resourcePool<Buffer, bigint>(pool, () => 0);
+const exec = unprioritizedResourcePool<Buffer>(pool);
 const xxhash = await xxhashIntializer();
 
-export const hashFile = (filepath: string) => {
-  const callback = (buffer: Buffer) => rawHashFile(buffer, filepath, xxhash);
-  return exec(null, callback, callback);
+export const hashFile = (filepath: string, seed?: bigint) => {
+  const callback = (buffer: Buffer) => rawHashFile(buffer, filepath, xxhash, seed);
+  return exec(null, callback);
 };

@@ -1,6 +1,6 @@
 {
   "name": "fast-hash-file",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "files": [
     "dist/*"
   ],
@@ -9,33 +9,33 @@
   "author": "Marcus Armstrong <marcusdarmstrong@gmail.com>",
   "scripts": {
     "format": "prettier --write . --ignore-path ../../.prettierignore",
-    "lint": "eslint *.ts --report-unused-disable-directives",
+    "lint": "eslint *.ts",
     "check": "tsc --project tsconfig.json --emitDeclarationOnly",
     "build": "rollup -c",
-    "test": "node --test dist",
+    "test": "node --test dist/*.test.js",
     "prepublishOnly": "npm run format && npm run check && npm run lint && npm run build && npm test",
     "bench": "node ./dist/benchmark.js"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "dependencies": {
-    "promisified-resource-pool": "^1.0.1",
-    "xxhash-wasm": "^1.0.1"
+    "promisified-resource-pool": "^2.0.0",
+    "xxhash-wasm": "^1.1.0"
   },
   "devDependencies": {
-    "prettier": "2.7.1",
-    "rollup": "2.79.0",
-    "@babel/preset-typescript": "7.18.6",
-    "@rollup/plugin-babel": "5.3.1",
-    "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.8.2",
-    "eslint": "8.23.0",
-    "@rollup/plugin-node-resolve": "14.0.1",
+    "prettier": "3.8.3",
+    "rollup": "4.60.2",
+    "@babel/preset-typescript": "7.28.5",
+    "@rollup/plugin-babel": "7.0.0",
+    "@rollup/plugin-terser": "0.4.4",
+    "typescript": "6.0.3",
+    "eslint": "10.2.1",
+    "@rollup/plugin-node-resolve": "16.0.3",
     "benchmark": "2.1.4",
-    "@types/benchmark": "2.1.2",
-    "fdir": "5.2.0",
-    "fast-read-file": "1.0.1"
+    "@types/benchmark": "2.1.5",
+    "fdir": "6.5.0",
+    "fast-read-file": "2.0.0"
   },
   "type": "module",
   "exports": {
