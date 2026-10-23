@@ -3,14 +3,14 @@ import * as crypto from "node:crypto";
 
 import Benchmark from "benchmark";
 import { fdir } from "fdir";
-import xxhashIntializer from "xxhash-wasm";
+import xxhashInitializer from "xxhash-wasm";
 
 import { sizedPool } from "promisified-resource-pool";
 import { readFile } from "fast-read-file";
 
 import { hashFile } from "./throttled";
 
-const xxhash = await xxhashIntializer();
+const xxhash = await xxhashInitializer();
 
 const pool = sizedPool(20);
 

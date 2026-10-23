@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert";
 import { hashFile } from "./hash-file";
-import xxhashIntializer from "xxhash-wasm";
+import xxhashInitializer from "xxhash-wasm";
 
-const xxhash = await xxhashIntializer();
+const xxhash = await xxhashInitializer();
 
 await test("It should hash files' contents the same as xxhash does", async () => {
   const filePath = "../../fixtures/micro.txt";
